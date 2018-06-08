@@ -1,17 +1,24 @@
 buildscript {
     ext.kotlin_version = '1.2.31'
+    ext.aws_container_spark_version = '1.1'
+    ext.aws_java_lambda_sdk_version = '1.11.342'
+    ext.jackson_kotlin_version = '2.9.+'
+    ext.spark_version = '2.7.2'
 
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
     }
 }
 
 group 'com.ordina.workshop'
 version '1.0'
 
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: 'kotlin'
 
@@ -23,6 +30,10 @@ repositories {
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_kotlin_version"
+    compile group: 'com.sparkjava', name: 'spark-core', version: "$spark_version"
+    compile group: 'com.amazonaws.serverless', name: 'aws-serverless-java-container-spark', version: "$aws_container_spark_version"
+    compile group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: "$aws_java_lambda_sdk_version"
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
