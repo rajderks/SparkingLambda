@@ -34,6 +34,9 @@ dependencies {
     compile group: 'com.sparkjava', name: 'spark-core', version: "$spark_version"
     compile group: 'com.amazonaws.serverless', name: 'aws-serverless-java-container-spark', version: "$aws_container_spark_version"
     compile group: 'com.amazonaws', name: 'aws-java-sdk-lambda', version: "$aws_java_lambda_sdk_version"
+    compile group: 'com.amazonaws', name: 'aws-lambda-java-log4j', version: '1.0.0'
+    compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
+    testCompile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
     testCompile group: 'junit', name: 'junit', version: '4.12'
 }
 
