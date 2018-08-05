@@ -1,4 +1,4 @@
-package com.example.lambda
+package com.ordina.workshop.sparkinglambda
 
 import com.amazonaws.serverless.exceptions.ContainerInitializationException
 import com.amazonaws.serverless.proxy.model.AwsProxyRequest
@@ -13,8 +13,11 @@ import spark.Request
 import spark.Response
 import spark.Spark.*
 
-class CalculatorLambda {
 
+data class CalcRequestObject(val numbers:Collection<Double>)
+data class CalcResponseObject(val result:Double)
+
+internal class CalculatorLambda {
     companion object {
         fun calcSum(req: Request, resp: Response): String {
             return calcFromSparkRequest(req, resp, ::summer)
@@ -42,7 +45,7 @@ class CalculatorLambda {
             return "Super generic error message"
         }
 
-        fun calcWithReducer(calcReq: CalcRequestObject, reducer:(Double, Double) -> Double): Double {
+        private fun calcWithReducer(calcReq: CalcRequestObject, reducer:(Double, Double) -> Double): Double {
             return calcReq.numbers.reduce(reducer)
         }
 
@@ -51,26 +54,24 @@ class CalculatorLambda {
         fun subtractor(d1: Double, d2: Double): Double = d1-d2
         fun divider(d1: Double, d2: Double): Double = d1/d2
     }
-
 }
 
 class LambdaHandler @Throws(ContainerInitializationException::class)
 constructor(): RequestHandler<AwsProxyRequest, AwsProxyResponse> {
-
     private val handler = SparkLambdaContainerHandler.getAwsProxyHandler()
-    private var initalized = false
+    private var initialized = false
     private val log = LoggerFactory.getLogger(LambdaHandler::class.java)
 
     override fun handleRequest(req: AwsProxyRequest, ctx: Context?): AwsProxyResponse {
         BasicConfigurator.configure()
-        if(!initalized) {
+        if(!initialized) {
             defineRoutes()
-            initalized = true
+            initialized = true
         }
         return handler.proxy(req, ctx)
     }
 
-    fun defineRoutes() {
+    private fun defineRoutes() {
         initExceptionHandler{ e ->
             log.error("Spark init failure", e)
             System.exit(100)
@@ -84,6 +85,3 @@ constructor(): RequestHandler<AwsProxyRequest, AwsProxyResponse> {
         post("/calc/div") { req, resp -> CalculatorLambda.calcDiv(req, resp) }
     }
 }
-
-data class CalcRequestObject(val numbers:Collection<Double>)
-data class CalcResponseObject(val result:Double)

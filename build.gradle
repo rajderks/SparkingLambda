@@ -12,6 +12,7 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.4'
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
     }
 }
 
@@ -21,15 +22,26 @@ version '1.0'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: 'kotlin'
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+junitPlatform {
+    filters {
+        engines {
+            include 'spek'
+        }
+    }
+}
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    maven { url "http://dl.bintray.com/jetbrains/spek" }
 }
 
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    compile "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_kotlin_version"
     compile group: 'com.sparkjava', name: 'spark-core', version: "$spark_version"
     compile group: 'com.amazonaws.serverless', name: 'aws-serverless-java-container-spark', version: "$aws_container_spark_version"
@@ -38,6 +50,9 @@ dependencies {
     compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.25'
     testCompile group: 'org.slf4j', name: 'slf4j-log4j12', version: '1.7.25'
     testCompile group: 'junit', name: 'junit', version: '4.12'
+    testCompile 'org.jetbrains.spek:spek-api:1.1.5'
+    testRuntime 'org.jetbrains.spek:spek-junit-platform-engine:1.1.5'
+    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 }
 
 compileKotlin {
