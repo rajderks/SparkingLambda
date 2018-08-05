@@ -19,40 +19,16 @@ data class CalcResponseObject(val result:Double)
 
 internal class CalculatorLambda {
     companion object {
-        fun calcSum(req: Request, resp: Response): String {
-            return calcFromSparkRequest(req, resp, ::summer)
-        }
 
-        fun calcSub(req: Request, resp: Response): String {
-            return calcFromSparkRequest(req, resp, ::subtractor)
-        }
-
-        fun calcDiv(req: Request, resp: Response): String {
-            return calcFromSparkRequest(req, resp, ::divider)
-        }
-
-        fun calcMultiply(req: Request, resp: Response): String {
-            return calcFromSparkRequest(req, resp, ::multiplier)
-        }
-
-        private fun calcFromSparkRequest(req: Request, response: Response, reducer: (Double, Double)->Double): String {
+        internal fun sumRequest(req: Request, response: Response): String {
             val mapper = jacksonObjectMapper()
             val calcReq = mapper.readValue<CalcRequestObject>(req.body())
             if(calcReq.numbers.count() > 0) {
-                val calcResp = calcWithReducer(calcReq, reducer)
-                return mapper.writeValueAsString(CalcResponseObject(calcResp))
+                val sum = calcReq.numbers.reduce({sum: Double, element:Double -> sum + element});
+                return mapper.writeValueAsString(CalcResponseObject(sum))
             }
-            return "Super generic error message"
+            return "Super generic error message about the numbers' count"
         }
-
-        private fun calcWithReducer(calcReq: CalcRequestObject, reducer:(Double, Double) -> Double): Double {
-            return calcReq.numbers.reduce(reducer)
-        }
-
-        fun multiplier(d1: Double, d2:Double): Double = d1*d2
-        fun summer(d1: Double, d2: Double): Double = d1+d2
-        fun subtractor(d1: Double, d2: Double): Double = d1-d2
-        fun divider(d1: Double, d2: Double): Double = d1/d2
     }
 }
 
@@ -79,9 +55,6 @@ constructor(): RequestHandler<AwsProxyRequest, AwsProxyResponse> {
         get("/hello"){ _, _ ->
             "hello world!"
         }
-        post("/calc/sum") { req, resp -> CalculatorLambda.calcSum(req, resp) }
-        post("/calc/multi") { req, resp -> CalculatorLambda.calcMultiply(req, resp) }
-        post("/calc/sub") { req, resp -> CalculatorLambda.calcSub(req, resp) }
-        post("/calc/div") { req, resp -> CalculatorLambda.calcDiv(req, resp) }
+        post("/calc/sum") { req, resp -> CalculatorLambda.sumRequest(req, resp) }
     }
 }
