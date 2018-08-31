@@ -390,7 +390,7 @@ ___
 [aws_api_create_resource]:./screenshots/ss_aws_api_create_resource.png
 [aws_api_create_get]:./screenshots/ss_aws_api_create_get.png
 [aws_api_get_test]:./screenshots/ss_aws_api_get_test.png
-[aws_gateway_test_post_sum]:./screenshots/ss_aws_gateway_test_post_sum.png
+[aws_gateway_test_post_sum]:./screenshots/ss_aws_api_post_sum_test.png
 [spek_plugin_install]:./screenshots/ss_spek_plugin_install.png
 [spek_plugin_result]:./screenshots/ss_spek_plugin_result.png
 [sam_test_result]:./screenshots/ss_sam_test_result.png
