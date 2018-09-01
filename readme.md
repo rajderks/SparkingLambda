@@ -116,9 +116,7 @@ Na het opslaan van `build.gradle` zal gradle automatisch gaan synchroniseren. Is
 ---
 In de file `LambdaHandler.kt` gaan we een classen optikken met een constructor voor de `AWS RequestHandler`. Gebruik de juiste import  `com.amazonaws.serverless.proxy.spark.SparkLambdaContainerHandler`.  
 
-de `!isInitialized` check is hier van belang, aangezien de server wellicht blijft draaien na de eerste aanroep, wil je niet bij ieder request je routes defineren. Dat kost CPU tijd/MEM en dat kost *geld* :)   
-
-Binnen `defineRoutes` ook de errorhandler initializeren
+De `!isInitialized` check is hier van belang, aangezien de server wellicht blijft draaien na de eerste aanroep, wil je niet bij ieder request je routes defineren. Dat kost CPU tijd/MEM en dat kost *geld* :) Om deze reden definiëren binnen `defineRoutes` ook de errorHandler van AWS-Log4j
 
 ```kotlin
 class LambdaHandler @Throws(ContainerInitializationException::class)
@@ -152,10 +150,10 @@ constructor(): RequestHandler<AwsProxyRequest, AwsProxyResponse> {
 __Kotlin features__ :  
 Enkele Kotlin features in het kort    
 `_` als parameter naam bij de functie `get("/hello"){_,_ -> ...}` betekent dat je de  parameter niet nodig hebt en weg wil laten. (weet niet precies wat dit inhoud)   
-`val` => een constante. Kan niet veranderen   
+`val` => een constante. (een final variabele)   
 `var` => een variabele.   
 Kotlin method signature : `fun <naam>() : returnType`   
-Inferre types : er staan geen type achter `private var initialized = false` omdat het type van `false` inferred wordt als een `boolean`. Expliciet type annoteren hoeft alleen als de compiler door complexiteit er niet uit komt. (of voor de mensen achter de knoppen, maar conventieel wordt het weggelaten tenzij het echt nodig is voor readability)
+Inferred types : er staan geen type achter `private var initialized = false` omdat het type van `false` inferred wordt als een `boolean`. Expliciet type annoteren hoeft alleen als de compiler door complexiteit er niet uit komt. (of voor de mensen achter de knoppen, maar conventieel wordt het weggelaten tenzij het echt nodig is voor readability)
 
 ## AWS Lambda
 ------
