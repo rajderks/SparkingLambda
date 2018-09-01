@@ -11,7 +11,7 @@ Daarnaast maken we gebruik van Kotlin en het veelbelovende Spek framework.
 - [AWS](https://aws.amazon.com/free/) account
 - Intellij Idea (community edition is voldoende)
 - Kotlin
-    * Installeren via Intellij Idea, onder plugins in het preferences menu
+    * Installeren via Intellij Idea `Preferences -> plugins`
 - Docker
     * Instructies op [Docker]
 - Python en PIP
@@ -19,7 +19,7 @@ Daarnaast maken we gebruik van Kotlin en het veelbelovende Spek framework.
     * Windows https://matthewhorne.me/how-to-install-python-and-pip-on-windows-10/
 - SAM Local CLI
     * Installeren via Pip : `pip install aws-sam-cli`
-    * Na het uivoeren van `sam --version` zou de huidige versie geprint moeten worden
+    * Na het uitvoeren van `sam --version` zou de huidige versie geprint moeten worden
     * Issues met Python, pip en SAM installeren? Wellicht kan deze [issue](https://github.com/awslabs/aws-sam-cli/issues/509) je uit de brand helpen 
 
 ### Voordat we beginnen 
@@ -113,7 +113,7 @@ Na het opslaan van `build.gradle` zal gradle automatisch gaan synchroniseren. Is
 
 
 ## LambdaHandler
----
+--- 
 In de file `LambdaHandler.kt` gaan we een classen optikken met een constructor voor de `AWS RequestHandler`. Gebruik de juiste import  `com.amazonaws.serverless.proxy.spark.SparkLambdaContainerHandler`.  
 
 De `!isInitialized` check is hier van belang, aangezien de server wellicht blijft draaien na de eerste aanroep, wil je niet bij ieder request je routes defineren. Dat kost CPU tijd/MEM en dat kost *geld* :) Om deze reden definiëren binnen `defineRoutes` ook de errorHandler van AWS-Log4j
@@ -148,7 +148,7 @@ constructor(): RequestHandler<AwsProxyRequest, AwsProxyResponse> {
 ```
 
 __Kotlin features__ :  
-Enkele Kotlin features in het kort    
+Enkele Kotlin features in het kort omschreven:    
 `_` als parameter naam bij de functie `get("/hello"){_,_ -> ...}` betekent dat je de  parameter niet nodig hebt en weg wil laten. (weet niet precies wat dit inhoud)   
 `val` => een constante. (een final variabele)   
 `var` => een variabele.   
@@ -172,11 +172,12 @@ Nu gaan we een server instellen op AWS. Stappenplan:
     * Geef het entrypoint van de handler in; bestaand uit de `<packageNaam>.<classNaam>`     bijvoorbeeld `handler` => `com.ordina.workshop.sparkinglambda.LambdaHandler`
 6. Druk op `save`
 
-Nu hebben we een Lambda. Mooi. Maar omdat we gebruik maken van de `Spark` Webservice  willen we deze wel kunnen benaderen met al onze verzoeken. Dit doen we door een trigger toe te voegen; een `AWS API Gateway`.
-
 ![aws_select_lambda]
 ![aws_create_lambda_function_scratch]
 ![aws_upload_lambda_and_handler]
+
+Nu hebben een Lambda hebben aangemaakt moeten we er ook voor zorgen dat we er wat mee kunnen doen. 
+Dit doen we door een trigger toe te voegen; een `AWS API Gateway`.
 
 ## API Gateway
 ___
@@ -196,7 +197,7 @@ ___
     * Vul onder path: `/hello` in
     * Druk op test onderaan de pagina
     * links zie je nu `'Hello world!'` in de console
-6. Gaat er wat mis? Dankzij SLF4J-simple komt de error log in `Cloudwatch` terecht
+6. Gaat er wat mis? Dankzij SLF4J-simple komt de error log in `AWS Cloudwatch` terrecht. Cloudwatch vind je ook in de grote grabbelton op de hoofdpagina, middels het zoekveld.
 ![aws_create_api]
 ![aws_api_create_resource]
 ![aws_api_create_get]
@@ -205,13 +206,14 @@ ___
 ## 2. Calculator
 ---
 
-Nu gaan we het iets spannender maken door een calculator in AWS lambda te zetten. Hierbij maken we gebruik van Post requests met een method Body.
+Nu gaan we het iets spannender maken door een calculator in AWS lambda te zetten.  
+Hierbij maken we gebruik van Post requests met een method Body.
 
 Vul `LambdaHandler.kt` aan met het volgende
 ```kotlin
 private fun defineRoutes() {
         ...
-        post("/calc/sum") { req, resp -> CalculatorLambda.calcSum(req, resp) }
+        post("/calc/sum") { req, resp -> CalculatorLambda.sumRequest(req, resp) }
     }
 ```
 Voeg boven de LambdaHandler de volgende code toe:
@@ -240,25 +242,28 @@ Kotlin features:
 - reduce: `Kotlin` beschikt over een groot aantal High Order functions zoals `listOf` en addities op collections zoals `map`, `flatMap`, `reduce`, etc. Neem eens een kijkje op [kotlin HOF en Lambda] 
 - companion object: kort door de bocht -> hier zet je de Class specifieke methods e.d. in; de `static` zaken dus.
 
-Met de `Jackson` library kan je op deze manier met weinig code een `JSON string` omzetten naar een eenvoudige `data class`. zo representeerd de definitie `data class CalcRequestObject(val numbers:Collection<Double>)` onderstaande JSON string 
+Met de `Jackson` library kan je met weinig code een `JSON string` omzetten naar een eenvoudige `data class`. zo representeerd de definitie `data class CalcRequestObject(val numbers:Collection<Double>)` onderstaande JSON string 
 ```json
 {
     "numbers": [1.0,2.0,3.0,4.0,5.0]
 }
 ```
 
-Nu gaan we weer terug naar het [AWS console] waar we een nieuwe `Post method` toevoegen aan de `GATEWAY API` om de nieuwe `calc/sum` functie te testen. Doe hierbij hetzelfde als je bij de GET hebt gedaan. Druk daarna op Test en vul als path `calc/sum` in met bovenstaande JSON als method body.
+Nu gaan we weer terug naar het [AWS console].  
+Maak opnieuw een shadowJar van je code d.m.m. `./gradlew shadowJar` en upload deze naar de eerder aangemaakt AWS Lambda.
+Voeg nu op deze wijze een `POST` method toe aan de `API gateway` zoals je de `GET` hebt toegevoegd in deel 1 om de nieuwe `calc/sum` functie te testen. Na het aanmaken van de `POST` method kan je deze weer testen door op `Test` te drukken. Vul als path `calc/sum` in met bovenstaande JSON als `Request body`.
+
 ![aws_gateway_test_post_sum]
 
 ### Uitdaging
 ___
 
 Omdat in AWS Lambda CPU Time en Memory cruciaal zijn voor de kosten moeten we ervoor zorgen dat de code zo compact mogelijk is.   
-`__Uitdaging__` schrijf zo compact mogelijk de functies voor het aftrekken, delen, en vermenigvuldigen.
+Probeer zo compact mogelijk de functies voor het aftrekken, delen, en vermenigvuldigen te schrijven!
    
 ## 3. Testen
 ___
-_Vanaf dit punt wordt gebruik gemaakt van code die geschreven als voorbeeld voor de uitdaging onderaan hoofdstuk twee_
+### _Vanaf dit punt wordt gebruik gemaakt van code geschreven als voorbeeld voor de uitdaging onderaan hoofdstuk twee. Deze code is te vinden in de directory part2_calculator_
 
 Het testen van een Lambda bestaat uit mogelijk drie stappen, namelijk:
 1. Het handmatig testen zoals we tot nu toe gedaan hebben
@@ -279,7 +284,7 @@ buildscript: {
 }
 ...
 apply plugin: 'org.junit.platform.gradle.plugin'
-
+...
 junitPlatform {
     filters {
         engines {
@@ -287,12 +292,12 @@ junitPlatform {
         }
     }
 }
-
+...
 repositories {
     ...
     maven { url "http://dl.bintray.com/jetbrains/spek" }
 }
-
+...
 dependencies: {
     ...
     testCompile group: 'junit', name: 'junit', version: '4.12'
@@ -304,6 +309,8 @@ dependencies: {
 ```
 
 Installeer ook de `Spek` plugin voor Intellij door te navigeren naar `Preferences -> plugins` en te zoeken naar Spek.   
+
+
 ![spek_plugin_install]
 
 Om te beginnen met het testen van Spek maken we de file `LambdaSpec.kt` aan in package `com.ordina.workshop.` in de test source map. Voeg hier onderstaande code aan toe.
@@ -337,10 +344,11 @@ Na het runnen van Spek zal je net als bij JUnit onderin de resultaten zien
 ![spek_plugin_result]
 
 ### 3.2 SAM CLI
-Testen van de AWS lokaal kan met de beta van [SAM CLI]; zie [installeren van SAM CLI] voor de instructies.   
+Het lokaal testen van de gehele GATEWAY/Lambda service kan met de [SAM CLI] van AWS.
+Zie [installeren van SAM CLI] voor de instructies.
 
 #### 3.2.1 Configuratie
-Om SAM te informeren wat we willen doen moeten we een configuratie bestand aanmaken. Maak nu het bestand aan `{project_root}/src/resources/sam/config.yaml`
+Om SAM te informeren wat we willen doen moeten we een configuratie bestand aanmaken. Maak het bestand volgende aan `{project_root}/src/resources/sam/config.yaml`
 
 De inhoud van dit bestand ziet er uit als volgt. Let hierbij op dat de handler en CodeUri verwijzen naar de `handler` en de gegenereerde `jar`.   
 
@@ -390,7 +398,7 @@ $ sam local start-api
 2018-08-05 13:57:10  * Running on http://127.0.0.1:3000/ (Press CTRL+C to quit)
 ```
 
-De Lambda kan je nu testen door met je favoriete programma of commando een POST te versturen naar de endpoints voor ons gedefineerd door `SAM`. Het cURL commando luidt als volgt:
+De Lambda kan je nu testen door met je favoriete programma of commando een POST te versturen naar de endpoints voor ons gedefineerd door `SAM`. Het `cURL` commando luidt als volgt:
 
 ```bash
 curl --request POST \
@@ -407,7 +415,7 @@ curl --request POST \
 ___
 
 
-[LinkedIn] tutorial die ik gevolgd heb, zeer uitgebreid over AWS account en code.
+[LinkedIn] learning die ik gevolgd heb, zeer uitgebreid over AWS account en code.
 
 [spek]:https://spekframework.org/
 [spark]:http://sparkjava.com/
@@ -420,7 +428,7 @@ ___
 [installeren van SAM CLI]:https://docs.aws.amazon.com/lambda/latest/dg/sam-cli-requirements.html
 [Pip]: https://pip.pypa.io/en/stable/installing/
 
-![text][Remaining dependenies]
+![giphy][Remaining dependenies]
 
 [Remaining dependenies]: https://media.giphy.com/media/l41lUjUgLLwWrz20w/giphy.gif
 
