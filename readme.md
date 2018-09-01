@@ -1,21 +1,55 @@
 SparkingLambda
 ====== 
 
-Hele lange intro tekst over hoe cool het is dat AWS een eigen versie van de [Spark] micro webservice (niet Apache Spark!) heeft gemaakt om deze in een `AWS` te gooien, zodat je een heel cool en clean een webserver op kan zetten. Ook is Kotlin is heel cool en Spek ziet er goed uit als upcoming test framework.
+Het doel van deze workshop is het opzetten van een `AWS Lambda API` door middel van de micro webservice [Spark]. (niet Apache Spark!)   
+Op deze manier kan je erg snel een webservice draaien voor je applicatie waarmee erg veel uit handen wordt genomen zoals oneindige schaling, het exposen van HTTP endpoints, authenticatie, interne monitoring, betaling naar gebruik etc.   
+Daarnaast maken we gebruik van Kotlin en het veelbelovende Spek framework.
+
 
 ### Prerequisites
 ------
-- AWS account   
-- Intellij Idea (community edition) is handig
-- Kotlin up to date
+- [AWS](https://aws.amazon.com/free/) account
+- Intellij Idea (community edition is voldoende)
+- Kotlin
+    * Installeren via Intellij Idea, onder plugins in het preferences menu
 - Docker
+    * Instructies op [Docker]
+- Python en PIP
+    * Indien je op Mac OSx zit en Homebrew hebt geinstallereed `brew install python`, anders 
+    * Windows https://matthewhorne.me/how-to-install-python-and-pip-on-windows-10/
+- SAM Local CLI
+    * Installeren via Pip : `pip install aws-sam-cli`
+    * Na het uivoeren van `sam --version` zou de huidige versie geprint moeten worden
+    * Issues met Python, pip en SAM installeren? Wellicht kan deze [issue](https://github.com/awslabs/aws-sam-cli/issues/509) je uit de brand helpen 
+
+### Voordat we beginnen 
+------
+
+Om een vliegende start te maken met de workshop hebben we in de github repo een folder met de naam `part0` aangemaakt. Hierin staat het template waarin gradle geconfigureerd is voor Idea.    
+
+Ook is de oplossing voor ieder hoofdstuk te vinden onder de namen part1, part2 en part3 respectievelijk.
+
+Geen ervaring met gradle? Met de optie _use default gradle wrapper (recommended)_ wordt gradle bij je project gedownload door Idea en is de configuratie afdoende.
+
+In deze readme wordt vaak de notatie van drie punten `...` gebruikt om aan te geven dat er iets moet worden toegevoegd aan een bestaande configuratie, bestand of code. Het snippet hieronder zou betekenen dat je in de configuratie van je buildScript, het repositories object **aanvult** met de regel `jcenter()`, en niet hetgeen wat onder repositories staat vervangt (of de hele file).
+```gradle
+buildscript {
+    repositories {
+        ...
+        jcenter()
+    }
+}
+```
 
 
 ## 1. Initiële setup
 ___
-Om het project te beginnen moeten we dependencies toevoegen voor Spark/AWS/Lambda. Spek komt later in de readme.
 
-Shadowjar => hiermee kan je makkelijk fat-jars maken, geschikt voor AWS Lambda.
+Het eerste wat we moeten doen om onze Lambda te programmeren in het toevoegen van de gradle depencendenies.  
+Voeg onderstaande code toe aan de file genaamd **gradle.build**.
+
+Eerst voegen we ShadowJar toe. Dit is een Gradle plugin om met een enkel commando een fat-JAR te builden.  
+Later in de workshop maak je gebruik van ShadowJar door middel van het commando `./gradlew shadowJar` in de terminal in te voeren.
 
 ```gradle
 buildscript {
@@ -33,12 +67,12 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 ```
 
-Een nieuwe ShadowJar genereren doen we met gradle commando `./gradlew shadowJar`
-
-Overige dependencies:
-- AWS/Lambda
-- SLF4j is nodig voor AWS/Lambda error reporting
-- Jackson voor JSON => data class transformatie
+Onderstaande dependencies zijn de benodigdheden om een Spark server te runnen in een AWS Lambda.  
+Log4J wordt toegevoegd om de logging naar AWS Cloudwatch te doen indien er in de Lambda errors optreden.
+- [Spark](https://mvnrepository.com/artifact/com.sparkjava/spark-core)
+- [AWS Serverless Container Spark](https://mvnrepository.com/artifact/com.amazonaws.serverless/aws-serverless-java-container-spark)
+- [AWS Java SDK Lambda](https://mvnrepository.com/artifact/com.amazonaws/aws-java-sdk-lambda)
+- [AWS Lambda Log4j](https://mvnrepository.com/artifact/com.amazonaws/aws-lambda-java-log4j/1.0.0) en [AWS Log4j simple](https://mvnrepository.com/artifact/org.slf4j/slf4j-simple/1.7.25)
 
 ```gradle
 buildscript {
@@ -50,6 +84,7 @@ buildscript {
     ext.spark_version = '2.7.2'
     ...
 }
+...
 dependencies {
     ...
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
@@ -72,9 +107,15 @@ compileTestKotlin {
 }
 ```
 
+Na het opslaan van `build.gradle` zal gradle automatisch gaan synchroniseren. Is dit niet het geval, kan je het handmatig door het in gradle menu (standaard gedocked aan de rechterkant van je Intellij window) het synchroniseren te starten.  
+
+*Geeft gradle een synchronisatie error? Probeer er zelf uit te komen of kopieër de `build.gradle` uit de repositiory, in de folder `part1`.*
+
+
 ## LambdaHandler
 ---
-Een 'hello world' example:   
+In de file `LambdaHandler.kt` gaan we een classen optikken met een constructor voor de `AWS RequestHandler`. Gebruik de juiste import  `com.amazonaws.serverless.proxy.spark.SparkLambdaContainerHandler`.  
+
 de `!isInitialized` check is hier van belang, aangezien de server wellicht blijft draaien na de eerste aanroep, wil je niet bij ieder request je routes defineren. Dat kost CPU tijd/MEM en dat kost *geld* :)   
 
 Binnen `defineRoutes` ook de errorhandler initializeren
@@ -162,6 +203,7 @@ ___
 ![aws_api_create_resource]
 ![aws_api_create_get]
 ![aws_api_get_test]
+
 ## 2. Calculator
 ---
 
@@ -371,12 +413,14 @@ ___
 
 [spek]:https://spekframework.org/
 [spark]:http://sparkjava.com/
+[Docker]:https://docs.docker.com/
 [AWS console]:https://console.aws.amazon.com
 [kotlin HOF en Lambda]:https://kotlinlang.org/docs/reference/lambdas.html
 [dataclass documentatie]:https://kotlinlang.org/docs/reference/data-classes.html
 [LinkedIn]:https://www.linkedin.com/learning/developing-aws-lambda-functions-with-kotlin/intellij-maven-and-kotlin
 [SAM CLI]:https://docs.aws.amazon.com/lambda/latest/dg/test-sam-cli.html
 [installeren van SAM CLI]:https://docs.aws.amazon.com/lambda/latest/dg/sam-cli-requirements.html
+[Pip]: https://pip.pypa.io/en/stable/installing/
 
 ![text][Remaining dependenies]
 
